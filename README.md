@@ -1,1 +1,61 @@
 # support-
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: #0f172a;
+  color: #e2e8f0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+.container {
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.subtitle {
+  color: #94a3b8;
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+}
+
+#sharedText {
+  width: 100%;
+  height: 60vh;
+  min-height: 300px;
+  padding: 16px;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  background: #1e293b;
+  color: #f1f5f9;
+  border: 2px solid #334155;
+  border-radius: 12px;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+#sharedText:focus {
+  border-color: #38bdf8;
+}
+
+.status {
+  font-size: 0.85rem;
+  color: #64748b;
+  text-align: right;
+}
