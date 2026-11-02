@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shared Notepad</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Shared Notepad</h1>
+    <p class="subtitle">Type anything — everyone with the link can see it live</p>
+
+    <textarea id="sharedText" placeholder="Start typing here..."></textarea>
+
+    <p class="status" id="status">Connecting...</p>
+  </div>
+
+  <script>
+    // ⬇️ PASTE YOUR SUPABASE DETAILS HERE ⬇️
+    const SUPABASE_URL = "https://YOUR_PROJECT_ID.supabase.co";
+    const SUPABASE_ANON_KEY = "YOUR_ANON_KEY";
+    // ⬆️ PASTE YOUR SUPABASE DETAILS HERE ⬆️
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const textarea = document.getElementById("sharedText");
+    const status = document.getElementById("status");
+
+    // Load the current text when the page opens
+    async function loadText() {
+      const { data, error } = await supabase
+        .from("notes")
+        .select("content")
+        .eq("id", 1)
+        .single();
+
+      if (error) {
+        console.error(error);
+        status.textContent = "Error loading text";
+        return;
+      }
+
+      if (data && data.content !== null) {
+        textarea.value = data.content;
+      }
+      status.textContent = "Connected • Live";
+    }
+
+    // Save text to Supabase (with small delay so we don't spam)
+    let saveTimeout = null;
+    function saveText() {
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(async () => {
+        const { error } = await supabase
+          .from("notes")
+          .update({ content: textarea.value })
+          .eq("id", 1);
+
+        if (error) {
+          console.error(error);
+          status.textContent = "Error saving...";
+        } else {
+          status.textContent = "Connected • Live";
+        }
+      }, 300);
+    }
+
+    // Listen for changes from other people
+    supabase
+      .channel("notes-channel")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "notes",
+          filter: "id=eq.1",
+        },
+        (payload) => {
+          const newContent = payload.new.content;
+          // Only update if the text is different (avoids fighting with your own typing)
+          if (newContent !== textarea.value) {
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            textarea.value = newContent || "";
+            textarea.setSelectionRange(start, end);
+          }
+        }
+      )
+      .subscribe((statusMsg) => {
+        if (statusMsg === "SUBSCRIBED") {
+          status.textContent = "Connected • Live";
+        }
+      });
+
+    // When the user types
+    textarea.addEventListener("input", saveText);
+
+    // Start
+    loadText();
+  </script>
+</body>
+</html>
